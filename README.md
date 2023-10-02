@@ -880,7 +880,7 @@ And when we do that, we get the flag, `maple{G05h_1_w4nt_4_st4bl3_m4tch_t00_pls_
 
 NOTE: please wrap the flag in maple{...}
 
-**Files:** [ciphertext.txt](files/vigenere/ciphertext[1].txt) [ciphertext.txt](files/vigenere/source[1].py)
+**Files:** [ciphertext.txt](files/vigenere/ciphertext[1].txt) [source.py](files/vigenere/source[1].py)
 
 ## Writeup
 
