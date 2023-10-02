@@ -168,7 +168,7 @@ include "qelib1.inc";
 qreg q[4];
 ```
 
-How, the first qubit on the left (qubit 3) can be 1 or 0, and if it is 1, so is qubit 0 on the far right. Combined, these would give the note of A! We can set a superposition for qubit 3 with the Hadamard gate applied to it and then use CNOT/CX to set qubit 0 to 1 if qubit 3 is 1.
+Now, the first qubit on the left (qubit 3) can be 1 or 0, and if it is 1, so is qubit 0 on the far right. Combined, these would give the note of A! We can set a superposition for qubit 3 with the Hadamard gate applied to it and then use CNOT/CX to set qubit 0 to 1 if qubit 3 is 1.
 
 ```qasm
 h q[3];
