@@ -868,3 +868,142 @@ Again, we don't have everything, but we still have a lot! Now, we can just go ar
 ![Maple Island Image 8](images/island8.png)
 
 And when we do that, we get the flag, `maple{G05h_1_w4nt_4_st4bl3_m4tch_t00_pls_1_4m_50_l0n3ly}`!
+
+
+# Crypto: Pen and Paper
+
+**Points:** 100
+
+**Author:** vEvergarden
+
+**Description:** A sweet classical cipher. Why use a computer when I have a pen and paper?
+
+NOTE: please wrap the flag in maple{...}
+
+**Files:** [ciphertext.txt](files/vigenere/ciphertext[1].txt) [ciphertext.txt](files/vigenere/source[1].py)
+
+## Writeup
+
+First step as always is to look at the code! Ultimately it is a variant of a classical cipher, but the modifications make a huge difference!
+
+```py
+import string
+import random
+
+ALPHABET = string.ascii_uppercase
+
+
+def generate_key():
+    return [random.randint(0, 26) for _ in range(13)]
+
+
+def generate_keystream(key, length):
+    keystream = []
+    while len(keystream) < length:
+        keystream.extend(key)
+        key = key[1:] + key[:1]
+    return keystream
+
+
+def encrypt(message, key):
+    indices = [ALPHABET.index(c) if c in ALPHABET else c for c in message.upper()]
+    keystream = generate_keystream(key, len(message))
+    encrypted = []
+
+    for i in range(len(indices)):
+        if isinstance(indices[i], int):
+            encrypted.append(ALPHABET[(keystream[i] + indices[i]) % 26])
+        else:
+            encrypted.append(indices[i])
+
+    return "".join(encrypted)
+
+
+with open("plaintext.txt", "r") as f:
+    plaintext = f.read()
+
+key = generate_key()
+ciphertext = encrypt(plaintext, key)
+
+with open("ciphertext.txt", "w") as f:
+    f.write(ciphertext)
+```
+
+This gives us a lot of information! First, we know the key is 13 numbers long and each number is between 0 and 26 (including 0)! Second, we can see that this is very similar to a running-key Vigenere cipher. And lastly, we know how the key stream is generated, simply moving the first number to the end each iteration!
+
+And our first step is to use this to generate our own keystream! If we use a key of 1234567890abc, we can see what characters match up with what key, which can help during cryptanalysis!
+
+![Pen and Paper Image 1](images/vigenere1.png)
+
+Now, we need to generate a readable way to view this alongside the ciphertext! Setting `code` to the ciphertext and `key` to our new keystream, we can run the following JavaScript script in the console to get this format!
+
+![Pen and Paper Image 2](images/vigenere2.png)
+
+And just pasting that into a text file, we can start decoding!
+
+![Pen and Paper Image 3](images/vigenere3.png)
+
+First, we can see a bunch of single-letter words... Luckily, this can only be one of two things: "a" or "I". And it is most likely "a" since a majority of things other than personal letters won't use "I" as much...
+
+Specifically, we find the following instances:
+
+* An M with a 0 corresponding to it in the key
+* A T with a 7 corresponding to it in the key
+* A P with a 9 corresponding to it in the key
+* Another T but now with a 4 corresponding to it in the key
+* An I with a 5 corresponding to it in the key
+* A V with a 2 corresponding to it in the key
+
+For each of these, we can find a part of the key as follows, with the example being the first:
+
+```py
+(ord('M') - ord('A'))%26
+```
+
+Just changing M to the ciphertext letter and A to the plaintext letter, this is easy to do!
+
+Now, considering how the key values in our stream are one greater than the index (assuming 0 as 10, a as 11, b as 12, and c as 13), we can get a few indices of the key!
+
+Index 9 will be 12.
+
+Both index 6 and index 3 will be 19.
+
+Index 8 will be 15.
+
+Index 4 will be 8.
+
+Index 1 will be 21.
+
+We can add the following to `source.py` to control these indices and make the rest 0 so we are left with the original ciphertext:
+
+```py
+    k[0] = 0
+    k[1] = 21
+    k[2] = 0
+    k[3] = 19
+    k[4] = 8
+    k[5] = 0
+    k[6] = 19
+    k[7] = 0
+    k[8] = 15
+    k[9] = 12
+    k[10] = 0
+    k[11] = 0
+    k[12] = 0
+```
+
+And running, we can decrypt some of the cipher!
+
+![Pen and Paper Image 4](images/vigenere4.png)
+
+Two obvious changes in the first couple words are that "AVD" should be "AND" and "BO" should be "TO", so we can end up finding that both index 2 and 5 of the key are 8!
+
+And decrypting a bit more with this!
+
+![Pen and Paper Image 5](images/vigenere5.png)
+
+Now, it's starting to look like the beginning says "COMPETITIONS AND CRYPTOGRAPHY", so using this we can get index 0 as 12, index 7 as 23, index 10 as 25, index 11 as 16, and index 12 as 12! And this completes our key, so we can decrypt and get our flag!
+
+![Pen and Paper Image 6](images/vigenere6.png)
+
+And our flag is `maple{VIGENEREWITHAWTIST}`!
