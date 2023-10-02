@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
 Some important things to note with this code are that it reads user input in the form of OpenQASM strings encoded in base64 to then check if a chord is a correct chord in a progression. It does this by checking the first three highest-probability states of the quantum computer and comparing these with states assigned to musical notes.
 
-In quantum computing, "superpositions" are used where the computer has multiple states at the same time, but different probabilities of each state being measured. The combination of all state probabilities in the quantum computer is the state-vector. The state-vector stores a square-root version of the probability to allow for different "phases," but that doesn't matter for the purpose of this challenge.
+In quantum computing, rather than there being a single state at a given time, "superpositions" are used where the computer has multiple states at the same time, but different probabilities of each state being measured. A state is any combination of the values of the qubits, such as 0000 or 0001 or 1010 or anything like that! The combination of all state probabilities in the quantum computer is the state-vector. The state-vector stores a square-root version of the probability to allow for different "phases," but that doesn't matter for the purpose of this challenge, since as we can see in the code, only the real part is squared to get the probability. Other solutions might be possible without this, or possibly using this, since the quantum computer still processes the imaginary numbers, just they aren't registered by the server code!
 
 Some common quantum logic gates (similar to AND, NOT, OR, etc., but for quantum purposes) are the Hadamard gate (H), Pauli-X gate (X), controlled NOT gate (CNOT/CX), Toffoli gate or controlled-controlled-NOT (CCNOT/CCX), and the controlled Hadamard gate (CH). A Hadamard gate creates a superposition, giving the current qubit a 50% chance of being 0 and 50% chance of being 1. Another interesting feature of the gate is that applying it twice cancels it out! The Pauli-X gate simply flips the qubit, making it 1 if originally 0 or 0 if originally 1, similar to the classical NOT gate. Controlled gates like CNOT or CH apply a given gate, such as Pauli-X or Hadamard, respectively, only if another qubit is 1. And CCNOT applies the Pauli-X gate only if two qubits are 1, similar to a classical AND gate. Since OR can be implemented with NOT and AND, there is no need for an elementary equivalent in quantum computing.
 
@@ -168,14 +168,14 @@ include "qelib1.inc";
 qreg q[4];
 ```
 
-Now, the first qubit on the left (qubit 3) can be 1 or 0, and if it is 1, so is qubit 0 on the far right. Combined, these would give the note of A! We can set a superposition for qubit 3 with the Hadamard gate applied to it and then use CNOT/CX to set qubit 0 to 1 if qubit 3 is 1.
+Now, the first qubit on the left (qubit 3) can be 1 or 0, and if it is 1, so is qubit 0 on the far right. Combined, these would give the note of A! We can set a superposition for qubit 3 with the Hadamard gate applied to it and then use CNOT/CX to set qubit 0 to 1 if qubit 3 is 1. This means the computer can either be in state 0000 or 1001, each with a 50% chance.
 
 ```qasm
 h q[3];
 cx q[3], q[0];
 ```
 
-If qubit 3 is 0, qubit 2 can be 1 or 0 as well! And if it is 1, so is qubit 0, creating the note of F! Now, we need a sort of "if-not"... Well, the Pauli-X gate works just like a NOT and CH applies the Hadamard gate with a condition! Since we want a superposition, we need this rather than CNOT. So we can flip qubit 3 with an X gate, apply CH to 3 and 2, and flip back qubit 3 later with another X gate! We won't do this yet, though, since we still need this qubit for another "if-not" later! And since we need qubit 0 to match qubit 2, we can use another CNOT/CX applied to 2 and 0!
+If qubit 3 is 0, qubit 2 can be 1 or 0 as well! And if it is 1, so is qubit 0, creating the note of F! Now, we need a sort of "if-not"... Well, the Pauli-X gate works just like a NOT and CH applies the Hadamard gate with a condition! Since we want a superposition, we need this rather than CNOT. So we can flip qubit 3 with an X gate, apply CH to 3 and 2, and flip back qubit 3 later with another X gate! We won't do this yet, though, since we still need this qubit for another "if-not" later! And since we need qubit 0 to match qubit 2, we can use another CNOT/CX applied to 2 and 0! Once we flip back qubit 3, this will give a 50% chance of 1001 and a 25% each for 0000 and 0101. 
 
 ```qasm
 x q[3];
@@ -183,7 +183,7 @@ ch q[3], q[2];
 cx q[2], q[0];
 ```
 
-Now, we need to set qubit 1 (second from right) to 1 if both qubits 3 and 2 are 0. We can do the same "if-not" by flipping with a Pauli-X gate first, and luckily still have qubit 3 flipped from earlier, but now with a CCNOT! In classical terms, this sets qubit 1 to `NOT(q[3]) AND NOT(q[2])` which is exactly what we want! And we can end by flipping back qubits 2 and 3 to their previous states!
+Now, we need to set qubit 1 (second from right) to 1 if both qubits 3 and 2 are 0. We can do the same "if-not" by flipping with a Pauli-X gate first--and luckily we still have qubit 3 flipped from earlier--but now with a CCNOT! In classical terms, this sets qubit 1 to `NOT(q[3]) AND NOT(q[2])` which is exactly what we want! And we can end by flipping back qubits 2 and 3 to their previous states! This finishes our code with a 50% chance of 1001 and a 25% chance of each 0101 and 0010, which fits our chord!
 
 ```qasm
 x q[2];
