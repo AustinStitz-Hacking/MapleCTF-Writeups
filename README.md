@@ -715,3 +715,156 @@ Here, we find that `quack` is somehow something with a length that returns an em
 
 And another easy part, just add this to our flag, and our final flag is `maple{baNannnnas_are_a_mId_FruiT}`!
 
+
+# Misc: Maple Island <3
+
+**Points:** 100
+
+**Author:** hiswui
+
+**Description:** The name of the game is simple. It's love. They say opposites attract. You know like North and South, Hot and Cold, etc. The same is said to be true for parity too, the odd (the ones) and even DWORDS (the zeroes) have always had quite steamy and passionate relationships.
+
+Historically speaking, tradition was paramount for this species. The zeroes scour the world in hopes of find their special One. (Where do you think the saying comes from? duh.) However, we are in the 21st century and must adapt to the new.
+
+So, we made an entire reality TV show about it. The premise is simple: Screw tradition, in this show, only the Ones are allowed to court the zeroes.
+
+Stay tuned for the most drama-filled season of Maple Island as of yet with even more tears, arguments, and passionate moments than ever before. Will every match made in Maple heaven be stable?
+
+Maple Island streaming next month on MapleTV!
+
+But wait, lucky viewers have a chance to catch exclusive early-access content if they can solve the following puzzle below and text the answer to 1-800-MAPLE-1337.
+
+`nc maple-island.ctf.maplebacon.org 1337`
+
+**Files:** [dist.zip](files/island/dist[1].zip)
+
+## Writeup
+
+Inside the zip file is a very useful Python script!
+
+This is the code for that script:
+
+```py
+import os
+import time
+import random
+from secrets import SECRET_FLAG_TEXT, create_a_perfect_world
+
+
+CONTESTANTS_PER_SIDE = 20
+def generate_contestants():
+    ones = []
+    zeroes = []
+    oprefs = []
+    zprefs = []
+    while len(ones) < CONTESTANTS_PER_SIDE or len(zeroes) < CONTESTANTS_PER_SIDE:
+        contestant = os.urandom(4);
+        if contestant[-1] % 2 == 0 and len(zeroes) < CONTESTANTS_PER_SIDE:
+            zeroes.append(contestant)
+        elif contestant[-1] % 2 == 1 and len(ones) < CONTESTANTS_PER_SIDE:
+            ones.append(contestant)
+
+    for i in range(CONTESTANTS_PER_SIDE):
+        oprefs.append(random.sample(zeroes, len(zeroes)))
+        zprefs.append(random.sample(ones, len(ones)))
+    return (ones, zeroes, oprefs, zprefs)
+
+
+
+def xor_streams(otp, flag):
+    assert len(otp) == len(flag)
+    return b"".join([int.to_bytes(x ^ y) for x, y in zip(otp, flag)])
+
+
+
+
+print("""
+
+WELCOME TO MAPLE ISLAND <3
+---------------------------------
+
+The name of the game is simple. It's love. They say opposites attract.
+You know like North and South, Hot and Cold, etc. The same is said to
+be true for parity too, the odd (the ones) and even DWORDS (the zeroes) 
+have always had quite steamy and passionate relationships. 
+      
+Historically speaking, tradition was paramount for this species. The
+zeroes scour the world in hopes of find their special One. (Where do
+you think the saying comes from? duh.) However, we are in the 21st 
+century and must adapt to the new.
+
+So, we made an entire reality TV show about it. The premise is simple:
+Screw tradition, in this show, only the Ones are allowed to court the 
+zeroes.
+ 
+Stay tuned for the most drama-filled season of Maple Island as of yet
+with even more tears, arguments, and passionate moments than ever before.
+Will every match made in Maple heaven be stable?
+      
+Maple Island streaming next month on MapleTV!
+      
+But wait, lucky viewers have a chance to catch exclusive early-access content
+if they can solve the following puzzle below and text the answer to 1-800-MAPLE-1337.
+""")
+
+# just for readability on terminal
+time.sleep(2)
+
+ones, zeroes, oprefs, zprefs = generate_contestants()
+otp = b''
+for couple in create_a_perfect_world(ones, zeroes, oprefs, zprefs):
+    otp += couple
+
+
+
+ctext = xor_streams(otp, SECRET_FLAG_TEXT)
+print(f"""
+ones: {ones}
+zeroes: {zeroes}
+oprefs: {oprefs}
+zprefs: {zprefs}
+ctext: {ctext}
+""")
+```
+
+This doesn't really tell us much other than that the flag is XOR-encoded with a key generated from couples of "ones" and "zeroes" and that each "one" is an odd number converted to bytes and every "zero" is an even number.
+
+Anyways, we can go ahead and connect to get our data!
+
+![Maple Island Image 1](images/island1.png)
+
+The easiest thing to do here is convert the bytes in ctext to hexadecimal. Opening a Python shell and using the `hex()` method for the bytes object works perfectly well for this!
+
+Anyways, since we're dealing with XOR, this is a great job for [CyberChef](https://gchq.github.io/CyberChef/)!
+
+This is a lot of text, so it's probably not all the flag, so we can try looking to see if the end is a `}`! It might not be, but it's worth looking! We can put a bunch of spaces with this character at the end as an XOR key and see what that last byte is!
+
+![Maple Island Image 2](images/island2.png)
+
+And our last byte is `ca`! This is even, making it most likely a zero, and we can parse through the ones and zeroes a bit with Python to get the list and compare!
+
+![Maple Island Image 3](images/island3.png)
+
+And the very first item here is `244d82ca` which matches! There is another match, but this is only important if this first one doesn't work!
+
+And copying the result and pasting it as the key in hex, modifying the bytes to include this "zero" at the end, gives us something that looks like it very well could be part of a key!
+
+![Maple Island Image 4](images/island4.png)
+
+Now, if we put the last "one" (`4591a73b`), assuming they are in order based on the ones courting the zeroes from the description, right before this, we get a bit more!
+
+![Maple Island Image 5](images/island5.png)
+
+It looks like the key is made up of the ones followed by the zeroes, so if we put all of the ones with `00000000` as the corresponding zero, we can get a bit that is useful!
+
+![Maple Island Image 6](images/island6.png)
+
+Half of this is broken up, but it seems to say "Love will never give up on you. Love will never let you down. Love will never run around and desert you," followed by the flag! If we try using the first item of `oprefs` as the zero instead of just `00000000`, we can confirm this and get a bit more!
+
+![Maple Island Image 7](images/island7.png)
+
+Again, we don't have everything, but we still have a lot! Now, we can just go around the messed up areas and replace those zeroes with other random zeroes from the list until we get printable text!
+
+![Maple Island Image 8](images/island8.png)
+
+And when we do that, we get the flag, `maple{G05h_1_w4nt_4_st4bl3_m4tch_t00_pls_1_4m_50_l0n3ly}`!
