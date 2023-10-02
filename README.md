@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="assets/css/custom.css">
+
 # MapleCTF-Writeups
 
 This weekend from September 29th to October 1st, I competed in the MapleCTF competition as a part of the [49th Security Division](https://49sd.com)! Our team name was "stack smashing slackers."
