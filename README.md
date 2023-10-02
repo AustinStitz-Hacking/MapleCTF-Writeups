@@ -608,4 +608,110 @@ Doing this repeatedly, eventually, we get the progression `["Cmaj", "Cmaj", "Cma
 And our flag is `maple{qu4ntum_p34c3_c0d3_1s_m3m3nt0_m0r1}`!
 
 
-# Other writeups coming soon!
+# Rev: JaVieScript
+
+**Points:** 100
+
+**Author:** vie.pls
+
+**Description:** Something something JS something
+
+**Files:** [checker.js](files/javiescript/checker[1].js)
+
+## Writeup
+
+This was a really fun challenge and it was really interesting that JS was used in a reversing challenge!
+
+Anyways, this challenge deals heavily with JavaScript's weird handling of type coercions...
+
+This was the JavaScript code given:
+
+```js
+var flag = "maple{";
+var honk = {};
+
+async function hash(string) {
+	const utf8 = new TextEncoder().encode(string);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	const hashHex = hashArray
+	  .map((bytes) => bytes.toString(16).padStart(2, '0'))
+	  .join('');
+	return hashHex;
+  }
+
+async function constructflag() {
+	const urlParams = new URLSearchParams(window.location.search);
+	var fleg = "maple{";
+	for (const pair of urlParams.entries()) {
+		honk[pair[0]] = JSON.parse(pair[1]); 
+	}
+
+	if (honk.toString() === {}.toString()) {
+		fleg += honk.toString()[9];
+	}
+
+	if (Object.keys(honk).length === 0) {
+		const test = eval(honk.one);
+		if (typeof test === 'number' && test * test + '' == test + '' && !/\d/.test(test)) {
+			fleg += 'a' + test.toString()[0];
+		}
+
+		const quack = honk.two;
+
+		if (quack.toString().length === 0 & quack.length === 1) {
+			fleg += 'a' + (quack[0] + '')[0].repeat(4) + 'as';
+		}
+
+		const hiss = honk.three;
+
+		if (hiss === "_are_a_mId_FruiT}") {
+			fleg += hiss;
+		}
+	}
+	if (await hash(fleg) == "bfe06d1e92942a0eca51881a879a0a9aef3fe75acaece04877eb0a26ceb8710d") {
+		console.log(fleg);
+	}
+}
+
+constructflag();
+```
+
+For the first part of our flag, it clearly begins with `maple{`, which is hardcoded in!
+
+Then, we start getting into the reversing...
+
+```js
+	if (honk.toString() === {}.toString()) {
+		fleg += honk.toString()[9];
+	}
+```
+
+Here, it seems obvious that `honk` is an object. However, the `toString()` method of objects in JavaScript returns `[object Object]` rather than anything useful, and the 9th index of that is "b", so now we have `maple{b` as our flag!
+
+The code checks that `honk` doesn't have any keys, but this isn't really useful to us... Nothing else is done to the flag outside of this, and the flag needs to be closed!
+
+```js
+		if (typeof test === 'number' && test * test + '' == test + '' && !/\d/.test(test)) {
+			fleg += 'a' + test.toString()[0];
+		}
+```
+
+Here, we see that `test` is a number by type and when multiplied by itself returns itself, but also does not match some regex for digits. Well, the one value that satisfies all of these in JavaScript is `NaN`! It can be a huge pain when it gives you that from dividing by 0 without telling you in a warning/error, but here, it is useful, since it gives us the next letters of our flag, which is now `maple{baN`!
+
+```js
+		if (quack.toString().length === 0 & quack.length === 1) {
+			fleg += 'a' + (quack[0] + '')[0].repeat(4) + 'as';
+		}
+```
+
+Here, we find that `quack` is somehow something with a length that returns an empty string. The only things in JavaScript with a length are strings and arrays, so it must be an array! It also has one thing inside it. The only two possible values here are `[undefined]` or `[null]` and `maple{baNauuuuas` doesn't really make sense, so it must be the latter, giving us `maple{baNannnnas`!
+
+```js
+		if (hiss === "_are_a_mId_FruiT}") {
+			fleg += hiss;
+		}
+```
+
+And another easy part, just add this to our flag, and our final flag is `maple{baNannnnas_are_a_mId_FruiT}`!
+
